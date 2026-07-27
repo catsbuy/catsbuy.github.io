@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SITE TITLE</title>
+<link rel="icon" type="image/icon" href="[REPLACE WITH FAVICON]">
+<style>
+  :root{
+    --bg:#040006;
+    --alt-bg-start: #ffb3d9; /* light pink */
+    --alt-bg-end: #06000b;   /* near-black purple */
+    --title-color: #eae6ff;
+    --desc-color: rgba(234,230,255,0.92);
+    --accent-1: #ff8bd6;
+    --accent-2: #6b21a8;
+    --glow: rgba(181,127,255,0.16);
+    --card-bg: rgba(12,6,20,0.18);
+    --card-border: rgba(255,255,255,0.06);
+  }
+
+  html,body{ height:100%; margin:0; background:var(--bg); font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; color:var(--title-color); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; transition: background 700ms cubic-bezier(.2,.9,.2,1); }
+
+  /* Animated alternate background (pink -> dark purple) overlaid using pseudo-element */
+  body.alt-bg {
+    /* keep body background dark while overlaying gradient via ::before to allow smooth opacity animation */
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(180deg, var(--alt-bg-start), var(--alt-bg-end));
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity 600ms cubic-bezier(.2,.9,.2,1), transform 520ms cubic-bezier(.08,.82,.16,1);
+    mix-blend-mode: screen;
+    filter: saturate(1.05) contrast(1.02);
+  }
+  body.alt-bg::before {
+    opacity: 1;
+    transform: translateY(-6px); /* subtle movement */
+  }
+
+  canvas { display:block; width:100vw; height:100vh; }
+
+  /* hero */
+  .hero {
+    position: fixed;
+    inset: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    z-index:10;
+    text-align:center;
+    padding:2.25rem 1rem;
+  }
+  .card-hero {
+    pointer-events:auto;
+    backdrop-filter: blur(6px) saturate(1.05);
+    background: linear-gradient(180deg, rgba(12,6,20,0.18), rgba(12,6,20,0.12));
+    border: 1px solid var(--card-border);
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+    max-width: 900px;
+  }
+  h1 { margin:0 0 .25rem; font-size:clamp(1.6rem,3.8vw,2.7rem); color:var(--title-color); }
+  p.lead { margin:0; color:var(--desc-color); font-size:clamp(.9rem,1.5vw,1.05rem); }
+
+  /* Explore button in hero */
+  .hero-cta {
+    margin-top: 12px;
+    display:flex;
+    justify-content:center;
+    gap:12px;
+  }
+  .explore-btn {
+    pointer-events:auto;
+    appearance:none;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: linear-gradient(180deg,var(--accent-1),var(--accent-2));
+    color: #fff;
+    font-weight:700;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(107,33,168,0.28);
+    transition: transform 260ms ease, box-shadow 260ms ease, opacity 220ms ease;
+  }
+  .explore-btn:hover { transform: translateY(-3px); }
+  .explore-btn:active { transform: translateY(0); }
+
+  /* wheel area (initially hidden until alt state) */
+  .wheel-wrap {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%) translateY(36px);
+    bottom: 18px;
+    z-index: 30;
+    width: min(96vw, 1200px);
+    pointer-events:auto;
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+    gap:12px;
+    opacity: 0;
+    transition: opacity 420ms cubic-bezier(.2,.9,.2,1), transform 480ms cubic-bezier(.08,.85,.2,1);
+    will-change: opacity, transform;
+  }
+  /* When alt-bg is active, reveal and lift wheel into view */
+  body.alt-bg .wheel-wrap {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .glow-bar {
+    position: relative;
+    width:100%;
+    padding: 14px 12px 34px;
+    border-radius: 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(180deg, rgba(14,7,25,0.12), rgba(8,2,18,0.06));
+    box-shadow: 0 10px 60px rgba(15,5,40,0.6);
+    overflow: visible;
+  }
+
+  .bottom-glow {
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:-28px;
+    width: 110%;
+    height: 60px;
+    pointer-events:none;
+    border-radius: 50%;
+    filter: blur(28px);
+    transition: opacity 300ms ease, transform 420ms cubic-bezier(.2,.9,.2,1);
+    opacity: 0.06;
+    background: radial-gradient(60% 100% at 50% 20%, rgba(255,140,190,0.42), rgba(16,0,20,0.10), transparent 60%);
+  }
+  body.alt-bg .bottom-glow {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+
+  .wheel {
+    display:flex;
+    gap:14px;
+    align-items:flex-end;
+    padding: 6px 8px;
+    max-width: calc(100% - 36px);
+    overflow-x: auto;
+    scroll-behavior: smooth;
+  }
+  .mini-card { --w:160px; width:var(--w); min-width:var(--w); background:var(--card-bg); border:1px solid var(--card-border); border-radius:12px; padding:10px; box-sizing:border-box; color:var(--title-color); display:flex; flex-direction:column; gap:8px; align-items:center; transform-origin:center bottom; transition: transform 420ms cubic-bezier(.12,.9,.24,1), box-shadow 320ms ease, filter 320ms ease; cursor:pointer; }
+  .mini-card .img{ width:100%; height:100px; border-radius:8px; background-size:cover; background-position:center; }
+  .mini-card .title{ font-weight:600; font-size:.95rem; text-align:center; line-height:1.1; }
+  .mini-card .launch{ margin-top:4px; padding:6px 10px; font-size:.88rem; border-radius:8px; border:none; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); color:white; box-shadow: 0 6px 18px rgba(107,33,168,0.25); cursor:pointer; }
+
+  .mini-card.selected { transform: translateY(46px) scale(1.09); box-shadow: 0 18px 48px rgba(107,33,168,0.36); }
+  .mini-card.selected::after { content:""; position:absolute; left:50%; transform:translateX(-50%); bottom:-18px; width:70%; height:8px; border-radius:999px; background:linear-gradient(90deg, rgba(255,140,190,0.22), rgba(107,33,168,0.12)); filter: blur(8px); opacity:0.9; }
+
+  /* expanded panel */
+  .panel { position: absolute; left:50%; transform: translateX(-50%) translateY(calc(-100% - 80px)); bottom:96px; z-index:35; min-width:320px; max-width:880px; background: linear-gradient(180deg, rgba(12,6,20,0.88), rgba(10,5,18,0.78)); border-radius:12px; padding:16px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 30px 80px rgba(0,0,0,0.6); display:flex; gap:12px; align-items:center; opacity:0; pointer-events:none; transition: opacity 320ms ease, transform 320ms ease; }
+  .panel.show { opacity:1; pointer-events:auto; transform: translateX(-50%) translateY(-8px); }
+  .thumb{ width:110px; height:76px; border-radius:8px; background-size:cover; background-position:center; flex:0 0 110px; }
+  .info { color:var(--desc-color); } .info h3{ margin:0 0 6px; color:var(--title-color); } .info p{ margin:0 0 8px; font-size:.95rem; } .launch-btn { padding:10px 14px; border-radius:10px; background: linear-gradient(180deg,var(--accent-1),var(--accent-2)); color:#fff; border:none; cursor:pointer; font-weight:600; }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .mini-card, .mini-card.selected, .panel, .bottom-glow, body::before { transition: none !important; animation: none !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="targetElement">
+<div class="hero" aria-hidden="false">
+  <div class="card-hero" role="banner" aria-label="Welcome header">
+    <h1>TITLE</h1>
+    <p class="lead">DESCRIPTION</p>
+    <div class="hero-cta">
+      <button class="explore-btn" id="exploreBtn" onclick="hideContent()">BUTTON TEXT</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- bottom wheel and glow -->
+<div class="wheel-wrap" aria-hidden="false">
+  <div class="glow-bar" id="glowBar">
+    <div class="wheel" id="wheel" role="list" aria-label="Explore cards"></div>
+    <div class="bottom-glow" id="bottomGlow" aria-hidden="true"></div>
+  </div>
+  <!-- expanded panel -->
+  <div class="panel" id="panel" aria-hidden="true">
+    <div class="thumb" id="panelThumb" role="img" aria-label=""></div>
+    <div class="info">
+      <h3 id="panelTitle">Title</h3>
+      <p id="panelDesc">Short description about this destination.</p>
+      <div><button class="launch-btn" id="panelLaunch">Launch</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function hideContent() {
+  var x = document.getElementById("targetElement");
+  x.style.transition = "opacity 1s ease";
+  x.style.opacity = "0";
+  
+  // Optional: Remove from layout after fade finishes
+  setTimeout(() => {
+    element.style.display = "none";
+  }, 1000);
+}
+
+/* CARDS - easily expand by editing this array or calling addCard(...) */
+const CARDS = [
+  {
+    id: 'id',
+    title: 'TITLE',
+    desc: 'DESCRIPTION',
+    img: 'IMGURL',
+    url: '/'
+  }
+];
+
+/* --- particle background (same performant approach) --- */
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const CONFIG = { count: 120, radius: 1.25, maxSpeed: 0.45, connectDist: 78, hueBase: 265, hueSpread: 62, dotSat: 82, dotLight: 62, lineWidth: 0.9 };
+  function resize(){ const dpr = Math.min(window.devicePixelRatio || 1, 2); canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  addEventListener('resize', resize, { passive:true }); resize();
+  const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const particles=[]; for(let i=0;i<CONFIG.count;i++) particles.push({ x:Math.random()*innerWidth, y:Math.random()*innerHeight, vx:rand(-CONFIG.maxSpeed,CONFIG.maxSpeed), vy:rand(-CONFIG.maxSpeed,CONFIG.maxSpeed), hue:(CONFIG.hueBase - CONFIG.hueSpread/2) + Math.random()*CONFIG.hueSpread, size: CONFIG.radius * (0.7 + Math.random()*0.6) });
+  const connectDistSq = CONFIG.connectDist * CONFIG.connectDist;
+  let last = performance.now();
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function drawBackground(){ const w=innerWidth,h=innerHeight; ctx.fillStyle='#040006'; ctx.fillRect(0,0,w,h); const g = ctx.createRadialGradient(w*0.28, h*0.22, 10, w*0.5, h*0.5, Math.max(w,h)); g.addColorStop(0, 'rgba(150,80,200,0.08)'); g.addColorStop(0.35, 'rgba(50,15,90,0.06)'); g.addColorStop(1, 'rgba(4,0,6,1)'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h); }
+  function frame(now){
+    const dt = Math.min((now - last)/16.6667, 4); last = now;
+    drawBackground();
+    ctx.globalCompositeOperation = 'lighter';
+    for(let i=0;i<particles.length;i++){
+      const p = particles[i];
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if(p.x < -10) p.x = innerWidth + 10;
+      if(p.y < -10) p.y = innerHeight + 10;
+      if(p.x > innerWidth + 10) p.x = -10;
+      if(p.y > innerHeight + 10) p.y = -10;
+      ctx.beginPath(); ctx.fillStyle = `hsl(${p.hue} ${CONFIG.dotSat}% ${CONFIG.dotLight}%)`; ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.lineWidth = CONFIG.lineWidth;
+    for(let i=0, len=particles.length; i<len; i++){
+      const a = particles[i];
+      for(let j=i+1; j<len; j++){
+        const b = particles[j];
+        const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy;
+        if(d2 <= connectDistSq){
+          const dist=Math.sqrt(d2), t=clamp(dist/CONFIG.connectDist,0,1), alpha=Math.pow((1-t)*0.96,1.12), hue=Math.round((a.hue+b.hue)*0.5), light = CONFIG.dotLight-12;
+          ctx.strokeStyle = `hsla(${hue} ${CONFIG.dotSat}% ${light}%, ${alpha})`;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        }
+      }
+    }
+    if(!reduced){
+      ctx.globalCompositeOperation = 'soft-light';
+      const t = now * 0.00012, bandW = innerWidth * 0.14, bandX = (((Math.sin(t)+1)/2)*(innerWidth+bandW)) - bandW;
+      ctx.fillStyle = `rgba(255,255,255,${0.02 + 0.01*Math.sin(t*2.5)})`;
+      ctx.fillRect(bandX - bandW*0.35, 0, bandW, innerHeight);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    if(!reduced) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* --- UI: Reveal / fast scroll + background swap + wheel population --- */
+(() => {
+  const exploreBtn = document.getElementById('exploreBtn');
+  const wheel = document.getElementById('wheel');
+  const bottomGlow = document.getElementById('bottomGlow');
+  const panel = document.getElementById('panel');
+  const panelThumb = document.getElementById('panelThumb');
+  const panelTitle = document.getElementById('panelTitle');
+  const panelDesc = document.getElementById('panelDesc');
+  const panelLaunch = document.getElementById('panelLaunch');
+
+  function createMini(card){
+    const el = document.createElement('div'); el.className='mini-card'; el.tabIndex=0;
+    const img = document.createElement('div'); img.className='img'; img.style.backgroundImage = `url(${card.img})`; el.appendChild(img);
+    const title = document.createElement('div'); title.className='title'; title.textContent = card.title; el.appendChild(title);
+    const btn = document.createElement('button'); btn.className='launch'; btn.textContent = `Launch ${card.title}`; btn.setAttribute('aria-label', `Launch ${card.title}`); el.appendChild(btn);
+    el.addEventListener('click', ()=> selectCard(card, el)); el.addEventListener('keydown', (ev)=> { if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); selectCard(card, el);} if(ev.key==='ArrowRight') wheel.scrollBy({left:200,behavior:'smooth'}); if(ev.key==='ArrowLeft') wheel.scrollBy({left:-200,behavior:'smooth'}); });
+    btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); launchCard(card); });
+    return el;
+  }
+
+  CARDS.forEach(c => wheel.appendChild(createMini(c)));
+
+  let selectedEl = null;
+  let selectedCard = null;
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function selectCard(card, el){
+    if(selectedEl && selectedEl !== el) selectedEl.classList.remove('selected');
+    if(selectedEl === el){ el.classList.remove('selected'); selectedEl=null; selectedCard=null; hidePanel(); document.body.classList.remove('alt-bg'); return; }
+    selectedEl = el; selectedCard = card;
+    el.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+    requestAnimationFrame(()=>{ el.classList.add('selected'); showPanel(card); });
+  }
+
+  function showPanel(card){
+    panelThumb.style.backgroundImage = `url(${card.img})`; panelThumb.setAttribute('aria-label', card.title); panelTitle.textContent = card.title; panelDesc.textContent = card.desc || ''; panelLaunch.textContent = `Launch ${card.title}`; panelLaunch.onclick = ()=> launchCard(card);
+    panel.classList.add('show'); panel.setAttribute('aria-hidden','false');
+  }
+  function hidePanel(){ panel.classList.remove('show'); panel.setAttribute('aria-hidden','true'); }
+
+  function launchCard(card){ if(!card || !card.url) return; window.location.href = card.url; }
+
+  // Allow adding cards programmatically
+  window.addCard = function(card){ CARDS.push(card); wheel.appendChild(createMini(card)); };
+
+  // Click Explore: fast scroll down and toggle alternate bg + reveal wheel
+  exploreBtn.addEventListener('click', async ()=> {
+    // fast visual "speed down" movement: animate hero card translate & page scroll
+    const heroCard = document.querySelector('.card-hero');
+    if(!prefersReduced){
+      heroCard.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(30vh) scale(0.98)' }], { duration: 520, easing: 'cubic-bezier(.08,.85,.2,1)', fill: 'forwards' });
+    }
+    // smooth fast scroll to bottom-ish (we want to reveal bottom wheel)
+    const targetY = Math.max(document.body.scrollHeight - window.innerHeight, 1);
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+
+    // Toggle alternate background a bit after scroll starts so user sees motion
+    setTimeout(()=>{ document.body.classList.add('alt-bg'); }, 160);
+
+    // ensure wheel is visible and glow intensifies (class handles it)
+    setTimeout(()=>{ document.getElementById('bottomGlow').style.opacity = ''; }, 300);
+  });
+
+  // clicking outside should deselect
+  document.addEventListener('click', (ev)=>{
+    const path = ev.composedPath ? ev.composedPath() : (ev.path || []);
+    const wheelEl = document.getElementById('wheel');
+    if(!path.includes(wheelEl) && !path.includes(panel) && !path.includes(document.querySelector('.card-hero'))){
+      if(selectedEl) selectedEl.classList.remove('selected');
+      selectedEl=null; selectedCard=null;
+      hidePanel();
+    }
+  }, { capture:true });
+
+  // Escape closes
+  document.addEventListener('keydown', (ev)=>{
+    if(ev.key === 'Escape' && selectedEl){ selectedEl.classList.remove('selected'); selectedEl=null; selectedCard=null; hidePanel(); }
+  });
+
+})();
+</script>
+</body>
+</html>
