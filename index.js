@@ -1,4 +1,4 @@
-  function hideContent() {
+function hideContent() {
   var x = document.getElementById("targetElement");
   x.style.transition = "opacity 1s ease";
   x.style.opacity = "0";
