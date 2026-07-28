@@ -15,7 +15,7 @@ const CARDS = [
     id: 'ERROR',
     title: 'ERROR PG',
     desc: 'ERROR PAGE',
-    img: 'placehold.co/400x400',
+    img: 'https://placehold.co/400x400',
     url: '/error'
   }
 ];
