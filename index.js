@@ -12,48 +12,6 @@ function hideContent() {
 /* CARDS - easily expand by editing this array or calling addCard(...) */
 const CARDS = [
   {
-    id: 'random',
-    title: 'Random Cat',
-    desc: 'Get a fresh random cat photo every time you click.',
-    img: 'https://cataas.com/cat?width=300&height=220',
-    url: '/random.html'
-  },
-  {
-    id: 'breeds',
-    title: 'Cat Breeds',
-    desc: 'Browse cats sorted by breed, from Sphynx to Maine Coon.',
-    img: 'https://cataas.com/cat?width=300&height=220',
-    url: '/breeds.html'
-  },
-  {
-    id: 'gifs',
-    title: 'Cat GIFs',
-    desc: 'Animated cats doing weird, wonderful cat things.',
-    img: 'https://cataas.com/cat/gif?width=300&height=220',
-    url: '/gifs.html'
-  },
-  {
-    id: 'download',
-    title: 'Download',
-    desc: 'Save any cat image straight to your device in one click.',
-    img: 'https://cataas.com/cat?width=300&height=220',
-    url: '/download.html'
-  },
-  {
-    id: 'favorites',
-    title: 'Favorites',
-    desc: 'Keep a running list of the cats you never want to lose.',
-    img: 'https://cataas.com/cat?width=300&height=220',
-    url: '/favorites.html'
-  },
-  {
-    id: 'gallery',
-    title: 'Gallery',
-    desc: 'Everything you have downloaded, all in one scrollable wall.',
-    img: 'https://cataas.com/cat?width=300&height=220',
-    url: '/gallery.html'
-  },
-  {
     id: 'ERROR',
     title: 'ERROR PG',
     desc: 'ERROR PAGE',
