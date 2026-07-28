@@ -12,11 +12,11 @@ function hideContent() {
 /* CARDS - easily expand by editing this array or calling addCard(...) */
 const CARDS = [
   {
-    id: 'id',
-    title: 'TITLE',
-    desc: 'DESCRIPTION',
-    img: 'IMGURL',
-    url: '/'
+    id: 'ERROR',
+    title: 'ERROR PG',
+    desc: 'ERROR PAGE',
+    img: 'placehold.co/400x400',
+    url: '/error'
   }
 ];
 
