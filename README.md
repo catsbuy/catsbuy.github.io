@@ -5,6 +5,7 @@ Static GitHub Pages site for Cats Buy (catsbuy.com).
 [![Visit catsbuy.com](https://img.shields.io/badge/Visit-catsbuy.com-brightgreen)](https://catsbuy.com)  
 [![Site status](https://img.shields.io/website-up-down-green-red/https/catsbuy.com)](https://downforeveryoneorjustme.com/catsbuy.com)
 
+[![Visit sirmeow.com (New Site Coming Soon)](https://img.shields.io/badge/Visit-sirmeow.com-brightgreen)](https://catsbuy.com)  
 [![Site status](https://img.shields.io/website-up-down-green-red/https/catsbuy.com)](https://downforeveryoneorjustme.com/sirmeow.com) - This Is Going To Be The New Site
 
 What it is
